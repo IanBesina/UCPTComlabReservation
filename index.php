@@ -421,7 +421,7 @@ if (isset($_POST['deleteReservation']) && isset($_SESSION['user']) && $_SESSION[
                 <input type='time' class='form-control' name='time' id='time' required>
                 </div>
                 <div class='form-group'>
-                <label for='label'>Label (Please Indicate the Class Name/Code, Teacher and Number of Hour(s):)</label>
+                <label for='label'>Label (Please Indicate the Class Name/Code, Teacher and Number of Hour[s]):</label>
                 <input type='text' class='form-control' name='label' id='label' required>
                 </div>
                 <div class='form-check'>
