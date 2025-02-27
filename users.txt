@@ -1,0 +1,3 @@
+Admin|p@55word|1
+SirCabanas|success|0
+user1|test|0

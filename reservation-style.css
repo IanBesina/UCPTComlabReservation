@@ -1,0 +1,45 @@
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .day {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+            min-height: 120px;
+            position: relative;
+        }
+        .reservation {
+          background-color: lightblue;
+          padding: 5px;
+          margin-bottom: 5px;
+          border-radius: 5px;
+          font-size: 0.8em;
+        }
+
+        .day > span.day-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 0.9em;
+        }
+
+        .read-only-calendar-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        .read-only-calendar-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        /* Ensure calendar is above other content */
+        .calendar-section {
+            order: -1; /* Place before other elements */
+        }
+        .main-content {
+          display:flex;
+          flex-direction: column;
+        }
