@@ -4,7 +4,7 @@ session_start();
 // Flat file storage
 $roomsFile = 'rooms.txt';
 $reservationsFile = 'reservations.txt';
-$usersFile = 'users.txt';
+$usersFile = '.users';
 
 // Helper functions for user management
 function getUsers() {
@@ -39,7 +39,6 @@ function addUser($username, $password, $isAdmin) {
     return false; // Indicate username already exists
 }
 
-
 function deleteUser($username) {
     $users = getUsers();
     if (isset($users[$username])) {
@@ -48,10 +47,7 @@ function deleteUser($username) {
         return true; // Indicate success
     }
      return false; // Indicate user not found.
-
 }
-
-
 
 // Helper functions for room and reservation management
 function getRooms() {
@@ -93,9 +89,7 @@ function getReservations($room, $month, $year) {
                             $formattedDate = $startDate->format('Y-m-d');
                             if (!isset($reservations[$formattedDate]) || !in_array([$time, $label, $repeat], $reservations[$formattedDate])) {
                                 $reservations[$formattedDate][] = [$time, $label, $repeat];
-
                             }
-
                         }
                          $startDate->modify('+7 days');
                     }
@@ -106,15 +100,12 @@ function getReservations($room, $month, $year) {
     return $reservations;
 }
 
-
-
 function saveReservation($room, $date, $time, $label, $repeat) {
     global $reservationsFile;
     $newReservation = "$room|$date|$time|$label|$repeat";
     // Append the new reservation without reading and rewriting the whole file
     file_put_contents($reservationsFile, $newReservation . "\n", FILE_APPEND);
 }
-
 
 function deleteReservation($room, $date, $time) {
     global $reservationsFile;
@@ -128,7 +119,6 @@ function deleteReservation($room, $date, $time) {
     }
     file_put_contents($reservationsFile, implode("\n", $newLines));
 }
-
 
 // Authentication
 if (isset($_POST['login'])) {
@@ -150,8 +140,6 @@ if (isset($_GET['logout'])) {
     exit();
 }
 
-
-
 // Room management (admin only)
 if (isset($_POST['addRoom']) && isset($_SESSION['user']) && $_SESSION['isAdmin'] == 1) {
     $newRoom = $_POST['newRoom'];
@@ -170,7 +158,6 @@ if (isset($_POST['removeRoom']) && isset($_SESSION['user']) && $_SESSION['isAdmi
 }
 
 // User management (admin only)
-
 if (isset($_POST['addUser']) && isset($_SESSION['user']) && $_SESSION['isAdmin'] == 1) {
     $newUsername = $_POST['newUsername'];
     $newPassword = $_POST['newPassword'];
@@ -192,10 +179,7 @@ if (isset($_POST['deleteUser']) && isset($_SESSION['user']) && $_SESSION['isAdmi
        }
 }
 
-
-
 //Reservation Handling
-
 if (isset($_POST['addReservation']) && (isset($_SESSION['user']))) {
     $room = $_POST['room'];
     $date = $_POST['date'];
@@ -215,225 +199,244 @@ if (isset($_POST['deleteReservation']) && isset($_SESSION['user']) && $_SESSION[
      header("Location: " . $_SERVER['REQUEST_URI']);  //redirect to prevent form resubmission.
     exit;
 }
-
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Reservation System</title>
+    <meta charset="UTF-8">
+    <title>Facility Reservation System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="./reservation-style.css">
 </head>
 <body>
-<div class="container">
-    <h1><img src="./UCSOUTHCAMPUS.png" width="120px" length="120px">UCPT Laboratory Reservation System</h1>
-  <div class ="main-content">
-    <?php
-    // --- Calendar Display Logic (Common to all views) ---
-    $rooms = getRooms();
-    $currentMonth = isset($_GET['month']) ? $_GET['month'] : date('n');
-    $currentYear = isset($_GET['year']) ? $_GET['year'] : date('Y');
-    $selectedRoom = isset($_GET['room']) ? $_GET['room'] : (count($rooms) > 0 ? $rooms[0] : null); // Default to the first room
+<div class="container py-5">
+    <div class="d-flex align-items-center mb-4">
+        <img src="./Logo.png" alt="Logo" width="80" class="mr-3" onerror="this.style.display='none'">
+        <h1 class="mb-0">Facility Reservation System</h1>
+    </div>
 
-        // Room selection dropdown
-        echo '<div class="form-group">';
-        echo '<label for="roomSelect">Select Room:</label>';
-        echo '<select class="form-control" id="roomSelect" onchange="location = this.value;">';
-
-        foreach ($rooms as $room) {
-            $selected = ($selectedRoom == $room) ? 'selected' : '';
-            echo "<option value='?room=" . htmlspecialchars($room) . "' $selected>" . htmlspecialchars($room) . "</option>";
-        }
-        echo '</select></div>';
-
-          // Month/Year Navigation (only if a room is selected)
-            if($selectedRoom != null){
-                echo '<div class="mb-3">';
-            echo '<a href="?room=' . htmlspecialchars($selectedRoom) . '&month=' . ($currentMonth == 1 ? 12 : $currentMonth - 1) . '&year=' . ($currentMonth == 1 ? $currentYear - 1 : $currentYear) . '" class="btn btn-sm btn-secondary">< Previous</a> ';
-            echo date('F Y', mktime(0, 0, 0, $currentMonth, 1, $currentYear));
-            echo ' <a href="?room=' . htmlspecialchars($selectedRoom) . '&month=' . ($currentMonth == 12 ? 1 : $currentMonth + 1) . '&year=' . ($currentMonth == 12 ? $currentYear + 1 : $currentYear) . '" class="btn btn-sm btn-secondary">Next ></a>';
-            echo '</div>';
-            }
-            // Calendar Display
-             if ($selectedRoom != null) {
-            echo '<div class="calendar-section">';  // Added calendar-section class
-                echo '<h2>' . htmlspecialchars($selectedRoom) . ' Calendar</h2>';
-
-                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, $currentYear);
-                $firstDay = date('w', mktime(0, 0, 0, $currentMonth, 1, $currentYear));
-
-                echo '<div class="calendar">';
-
-                // Days of the Week
-                $daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                foreach ($daysOfWeek as $day) {
-                    echo '<div class="day">' . $day . '</div>';
-                }
-
-                // Empty Days Before
-                for ($i = 0; $i < $firstDay; $i++) {
-                    echo '<div class="day"></div>';
-                }
-
-                // Get Reservations
-                $reservations = getReservations($selectedRoom, $currentMonth, $currentYear);
-
-                // Days of the Month
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $date = $currentYear . "-" . str_pad($currentMonth, 2, '0', STR_PAD_LEFT) . "-" . str_pad($day, 2, '0', STR_PAD_LEFT);
-                    echo '<div class="day" data-date="' . $date . '">';
-                    echo '<span class="day-number">' . $day . '</span>';
-
-                    // Display Reservations
-                    if (isset($reservations[$date])) {
-                        foreach ($reservations[$date] as $reservation) {
-                            echo "<div class='reservation'>";
-                            echo htmlspecialchars($reservation[0]) . " - " . htmlspecialchars($reservation[1]);
-
-                            // Delete Button (admin only)
-                            if (isset($_SESSION['user']) && $_SESSION['isAdmin'] == 1) {
-                                echo " <form method='post' style='display:inline;'>";
-                                echo "<input type='hidden' name='room' value='" . htmlspecialchars($selectedRoom) . "'>";
-                                echo "<input type='hidden' name='date' value='" . $date . "'>";
-                                echo "<input type='hidden' name='time' value='" . htmlspecialchars($reservation[0]) . "'>";
-                                echo "<button type='submit' class='btn btn-danger btn-sm' name='deleteReservation'>Delete</button>";
-                                echo "</form>";
-                            }
-                            echo "</div>";
-                        }
-                    }
-                    echo '</div>';
-                }
-                echo '</div>'; // calendar
-            echo '</div>';  // calendar-section
-             }
-
-    ?>
-
-    <?php if (!isset($_SESSION['user'])): ?>
-        <!-- Login Form -->
-        <h2>Login</h2>
-        <?php if (isset($error)): ?>
-            <div class="alert alert-danger"><?php echo $error; ?></div>
-        <?php endif; ?>
-        <form method="post">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" class="form-control" name="username" id="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" class="form-control" name="password" id="password" required>
-            </div>
-            <button type="submit" class="btn btn-primary" name="login">Login</button>
-        </form>
-
-
-
-    <?php else: ?>
-        <!-- Logged-in User View -->
-        <p>Welcome, <?php echo $_SESSION['user']; ?>! <a href="?logout" class="btn btn-danger btn-sm">Logout</a></p>
-
-        <?php if ($_SESSION['isAdmin'] == 1): ?>
-            <!-- Admin-only Sections -->
-            <h2>Room Management</h2>
-            <form method="post">
-                <div class="form-group">
-                    <label for="newRoom">New Room:</label>
-                    <input type="text" class="form-control" name="newRoom" id="newRoom" required>
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            
+            <?php if (!isset($_SESSION['user'])): ?>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h4">Login</h2>
+                        <?php if (isset($error)): ?>
+                            <div class="alert alert-danger rounded"><?php echo $error; ?></div>
+                        <?php endif; ?>
+                        <form method="post">
+                            <div class="form-group">
+                                <label for="username" class="font-weight-bold text-muted">Username</label>
+                                <input type="text" class="form-control" name="username" id="username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password" class="font-weight-bold text-muted">Password</label>
+                                <input type="password" class="form-control" name="password" id="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" name="login">Login</button>
+                        </form>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-success" name="addRoom">Add Room</button>
-            </form>
-
-            <form method="post">
-                <div class="form-group">
-                    <label for="roomToRemove">Room to Remove:</label>
-                    <select class="form-control" name="roomToRemove" id="roomToRemove">
-                        <?php foreach (getRooms() as $room): ?>
-                            <option value="<?php echo $room; ?>"><?php echo $room; ?></option>
-                        <?php endforeach; ?>
-                    </select>
+            <?php else: ?>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <p class="mb-2 text-muted">Logged in as</p>
+                        <h4 class="mb-3 text-success"><?php echo htmlspecialchars($_SESSION['user']); ?></h4>
+                        <a href="?logout" class="btn btn-outline-danger btn-sm rounded-pill">Logout</a>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-danger" name="removeRoom">Remove Room</button>
-            </form>
 
-            <h2>User Management</h2>
-             <?php if (isset($userCreationSuccess)): ?>
-                <div class="alert alert-success"><?php echo $userCreationSuccess; ?></div>
+                <?php 
+                $rooms = getRooms();
+                $selectedRoom = isset($_GET['room']) ? $_GET['room'] : (count($rooms) > 0 ? $rooms[0] : null);
+                ?>
+
+                <?php if ($selectedRoom): ?>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h2 class="h4">Add Reservation</h2>
+                            <form method="post">
+                                <input type='hidden' name='room' value='<?php echo htmlspecialchars($selectedRoom); ?>'>
+                                <div class='form-group'>
+                                    <label for='date' class="font-weight-bold text-muted">Date</label>
+                                    <input type='date' class='form-control' name='date' id='date' required>
+                                </div>
+                                <div class='form-group'>
+                                    <label for='time' class="font-weight-bold text-muted">Time</label>
+                                    <input type='time' class='form-control' name='time' id='time' required>
+                                </div>
+                                <div class='form-group'>
+                                    <label for='label' class="font-weight-bold text-muted">Details (Group, Contact, Hours)</label>
+                                    <input type='text' class='form-control' name='label' id='label' placeholder="e.g. IT Dept Meeting, 2 hrs" required>
+                                </div>
+                                <div class='form-check mb-3'>
+                                    <input class='form-check-input' type='checkbox' name='repeat' id='repeat'>
+                                    <label class='form-check-label' for='repeat'>Repeat Weekly</label>
+                                </div>
+                                <button type='submit' class='btn btn-primary w-100' name='addReservation'>Reserve Facility</button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($_SESSION['isAdmin'] == 1): ?>
+                    <div class="card shadow-sm mb-4 border-success">
+                        <div class="card-header bg-success text-white rounded-top">
+                            <h5 class="mb-0">Admin Toolkit</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="font-weight-bold mt-2">Manage Facilities</h6>
+                            <hr class="mt-1 mb-3">
+                            <form method="post" class="mb-3">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="newRoom" placeholder="New Facility Name" required>
+                                    <div class="input-group-append">
+                                        <button type="submit" class="btn btn-success" name="addRoom">Add</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <form method="post" class="mb-4">
+                                <div class="input-group">
+                                    <select class="form-control" name="roomToRemove">
+                                        <?php foreach (getRooms() as $room): ?>
+                                            <option value="<?php echo htmlspecialchars($room); ?>"><?php echo htmlspecialchars($room); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="submit" class="btn btn-danger" name="removeRoom">Remove</button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <h6 class="font-weight-bold">Manage Users</h6>
+                            <hr class="mt-1 mb-3">
+                            
+                            <?php if (isset($userCreationSuccess)) echo "<div class='alert alert-success py-2'>$userCreationSuccess</div>"; ?>
+                            <?php if (isset($userCreationError)) echo "<div class='alert alert-danger py-2'>$userCreationError</div>"; ?>
+                            
+                            <form method="post" class="mb-3">
+                                <input type="text" class="form-control mb-2" name="newUsername" placeholder="Username" required>
+                                <input type="password" class="form-control mb-2" name="newPassword" placeholder="Password" required>
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" class="form-check-input" name="newIsAdmin" id="newIsAdmin">
+                                    <label class="form-check-label" for="newIsAdmin">Grant Admin Access</label>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-sm w-100" name="addUser">Create User</button>
+                            </form>
+
+                            <?php if (isset($userDeletionSuccess)) echo "<div class='alert alert-success py-2'>$userDeletionSuccess</div>"; ?>
+                            <?php if (isset($userDeletionError)) echo "<div class='alert alert-danger py-2'>$userDeletionError</div>"; ?>
+                            
+                            <form method="post">
+                                <div class="input-group">
+                                    <select class="form-control" name="userToDelete">
+                                        <?php foreach (getUsers() as $username => $userData): ?>
+                                            <?php if ($username !== "admin"): ?>
+                                                <option value="<?php echo htmlspecialchars($username); ?>"><?php echo htmlspecialchars($username); ?></option>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="submit" class="btn btn-outline-danger" name="deleteUser">Delete</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
-            <?php if (isset($userCreationError)): ?>
-                <div class="alert alert-danger"><?php echo $userCreationError; ?></div>
-            <?php endif; ?>
-            <form method="post">
-                <div class="form-group">
-                    <label for="newUsername">New Username:</label>
-                    <input type="text" class="form-control" name="newUsername" id="newUsername" required>
-                </div>
-                <div class="form-group">
-                    <label for="newPassword">New Password:</label>
-                    <input type="password" class="form-control" name="newPassword" id="newPassword" required>
-                </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="newIsAdmin" id="newIsAdmin">
-                    <label class="form-check-label" for="newIsAdmin">Admin User</label>
-                </div>
-                <button type="submit" class="btn btn-success" name="addUser">Add User</button>
-            </form>
+        </div>
 
+        <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <?php
+                    $rooms = getRooms();
+                    $currentMonth = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('n');
+                    $currentYear = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+                    $selectedRoom = isset($_GET['room']) ? $_GET['room'] : (count($rooms) > 0 ? $rooms[0] : null);
 
-             <?php if (isset($userDeletionSuccess)): ?>
-                <div class="alert alert-success"><?php echo $userDeletionSuccess; ?></div>
-            <?php endif; ?>
-            <?php if (isset($userDeletionError)): ?>
-                <div class="alert alert-danger"><?php echo $userDeletionError; ?></div>
-            <?php endif; ?>
-            <form method="post" class = "mt-3">
-                <div class="form-group">
-                    <label for="userToDelete">User to Delete:</label>
-                    <select class="form-control" name="userToDelete" id="userToDelete">
-                        <?php foreach (getUsers() as $username => $userData): ?>
-                            <?php if ($username !== "admin"): ?>
-                                 <option value="<?php echo $username; ?>"><?php echo $username; ?></option>
+                    if ($rooms): ?>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                            <div class="form-group mb-0" style="min-width: 250px;">
+                                <select class="form-control form-control-lg text-success font-weight-bold" onchange="location = this.value;">
+                                    <?php foreach ($rooms as $room): ?>
+                                        <option value="?room=<?php echo urlencode($room); ?>" <?php echo ($selectedRoom === $room) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($room); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <?php if ($selectedRoom): ?>
+                                <div class="btn-group mt-3 mt-md-0 shadow-sm">
+                                    <a href="?room=<?php echo urlencode($selectedRoom); ?>&month=<?php echo ($currentMonth == 1 ? 12 : $currentMonth - 1); ?>&year=<?php echo ($currentMonth == 1 ? $currentYear - 1 : $currentYear); ?>" class="btn btn-light border">&laquo; Prev</a>
+                                    <button class="btn btn-light border font-weight-bold px-4" disabled>
+                                        <?php echo date('F Y', mktime(0, 0, 0, $currentMonth, 1, $currentYear)); ?>
+                                    </button>
+                                    <a href="?room=<?php echo urlencode($selectedRoom); ?>&month=<?php echo ($currentMonth == 12 ? 1 : $currentMonth + 1); ?>&year=<?php echo ($currentMonth == 12 ? $currentYear + 1 : $currentYear); ?>" class="btn btn-light border">Next &raquo;</a>
+                                </div>
                             <?php endif; ?>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-danger" name="deleteUser">Delete User</button>
-            </form>
+                        </div>
 
-        <?php endif; ?>
+                        <?php if ($selectedRoom): ?>
+                            <div class="calendar-section">
+                                <div class="calendar calendar-header mb-2">
+                                    <?php foreach (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as $day) echo "<div class='day'>$day</div>"; ?>
+                                </div>
+                                <div class="calendar">
+                                    <?php
+                                    $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $currentMonth, $currentYear);
+                                    $firstDay = date('w', mktime(0, 0, 0, $currentMonth, 1, $currentYear));
+                                    $reservations = getReservations($selectedRoom, $currentMonth, $currentYear);
 
-        <!-- Reservation Form (teachers and admins) -->
-           <?php  if (isset($_SESSION['user']) && $selectedRoom): ?>
-            <h2>Add Reservation</h2>
-                <form method="post">
-                <input type='hidden' name='room' value='<?php echo htmlspecialchars($selectedRoom); ?>'>
-                <div class='form-group'>
-                <label for='date'>Date:</label>
-                <input type='date' class='form-control' name='date' id='date' required>
-                </div>
-                <div class='form-group'>
-                <label for='time'>Time:</label>
-                <input type='time' class='form-control' name='time' id='time' required>
-                </div>
-                <div class='form-group'>
-                <label for='label'>Label (Please Indicate the Class Name/Code, Teacher and Number of Hour[s]):</label>
-                <input type='text' class='form-control' name='label' id='label' required>
-                </div>
-                <div class='form-check'>
-                <input class='form-check-input' type='checkbox' name='repeat' id='repeat'>
-                <label class='form-check-label' for='repeat'>Repeat Weekly</label>
-                </div>
-                <button type='submit' class='btn btn-primary' name='addReservation'>Add Reservation</button>
-                </form>
-        <?php endif; ?>
-    <?php endif; ?>
+                                    for ($i = 0; $i < $firstDay; $i++) echo '<div class="day" style="background-color: #f8f9fa; border:none;"></div>';
 
-  </div>
+                                    for ($day = 1; $day <= $daysInMonth; $day++) {
+                                        $dateStr = sprintf("%04d-%02d-%02d", $currentYear, $currentMonth, $day);
+                                        echo "<div class='day'>";
+                                        echo "<span class='day-number'>$day</span>";
+
+                                        if (isset($reservations[$dateStr])) {
+                                            foreach ($reservations[$dateStr] as $reservation) {
+                                                echo "<div class='reservation'>";
+                                                echo "<strong>" . htmlspecialchars($reservation[0]) . "</strong>";
+                                                echo "<span>" . htmlspecialchars($reservation[1]) . "</span>";
+
+                                                if (isset($_SESSION['user']) && $_SESSION['isAdmin'] == 1) {
+                                                    echo "<form method='post' class='mt-2'>";
+                                                    echo "<input type='hidden' name='room' value='" . htmlspecialchars($selectedRoom) . "'>";
+                                                    echo "<input type='hidden' name='date' value='$dateStr'>";
+                                                    echo "<input type='hidden' name='time' value='" . htmlspecialchars($reservation[0]) . "'>";
+                                                    echo "<button type='submit' class='btn btn-danger btn-sm py-0 w-100' name='deleteReservation' style='font-size: 0.8em;'>Delete</button>";
+                                                    echo "</form>";
+                                                }
+                                                echo "</div>";
+                                            }
+                                        }
+                                        echo "</div>";
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <div class="text-center py-5 text-muted">
+                            <h4>No facilities available.</h4>
+                            <p>Please log in as an administrator to add rooms.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

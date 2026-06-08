@@ -1,45 +1,115 @@
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-        }
-        .day {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: left;
-            min-height: 120px;
-            position: relative;
-        }
-        .reservation {
-          background-color: lightblue;
-          padding: 5px;
-          margin-bottom: 5px;
-          border-radius: 5px;
-          font-size: 0.8em;
-        }
+body {
+    background-color: #f4f9f4; /* Soft, readable grayish-green background */
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #2c3e50;
+}
 
-        .day > span.day-number {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            font-size: 0.9em;
-        }
+h1, h2 {
+    color: #198754; /* Modern, readable green */
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
 
-        .read-only-calendar-container {
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            padding: 10px;
-        }
+/* Ergonomic Card Containers */
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
+    margin-bottom: 25px;
+    background-color: #ffffff;
+}
 
-        .read-only-calendar-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        /* Ensure calendar is above other content */
-        .calendar-section {
-            order: -1; /* Place before other elements */
-        }
-        .main-content {
-          display:flex;
-          flex-direction: column;
-        }
+/* Rounded, friendly inputs and buttons */
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 1px solid #ced4da;
+}
+
+.form-control:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    padding: 8px 20px;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-primary:hover {
+    background-color: #157347;
+    border-color: #146c43;
+    transform: translateY(-1px);
+}
+
+/* Modern Calendar Layout */
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.day {
+    background: #ffffff;
+    border: 1px solid #e8f0eb;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: left;
+    min-height: 130px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.day:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(25, 135, 84, 0.1);
+    border-color: #198754;
+}
+
+/* Reservation Badges */
+.reservation {
+    background-color: #d1e7dd; /* Light success green */
+    color: #0f5132; /* Dark green text */
+    padding: 8px;
+    margin-top: 25px; /* Clears the date number */
+    margin-bottom: 6px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    border-left: 4px solid #198754;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.day > span.day-number {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #6c757d;
+}
+
+.calendar-header .day {
+    min-height: auto;
+    text-align: center;
+    font-weight: 600;
+    color: #198754;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.calendar-header .day:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: transparent;
+}
